@@ -23,10 +23,15 @@ export const Header: React.FC<HeaderProps> = ({ onAddSubject }) => {
         
         <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-3">
-                {/* Black icons for light background */}
-                <button className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-zinc-900 hover:bg-gray-50 transition">
+                {/* Briefcase Icon - External Link */}
+                <a 
+                    href="https://bnmit-students.contineo.in/parentsodd/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-zinc-900 hover:bg-gray-50 transition"
+                >
                     <Briefcase size={20} />
-                </button>
+                </a>
                 <button 
                     onClick={onAddSubject}
                     className="w-10 h-10 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center text-zinc-900 hover:bg-gray-50 transition"

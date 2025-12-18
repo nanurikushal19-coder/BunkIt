@@ -55,7 +55,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = ({
         />
       </svg>
       <div className={`absolute ${fontSize} font-bold ${textColor}`}>
-        {Math.round(percentage)}%
+        {percentage.toFixed(2)}%
       </div>
     </div>
   );
