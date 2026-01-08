@@ -46,7 +46,12 @@ export const SubjectCard: React.FC<SubjectCardProps> = ({ subject, onUpdate, onD
                 <img 
                   src={WARNING_IMAGE_DATA} 
                   alt="Low Attendance Warning" 
-                  className="w-16 h-auto rounded-md border border-red-500/20 opacity-90 hover:opacity-100 transition-opacity" 
+                  className="w-16 h-auto rounded-md border border-red-500/20 opacity-90 hover:opacity-100 transition-opacity"
+                  onError={(e) => {
+                    // Fallback if the provided link is a viewer link or broken
+                    e.currentTarget.src = 'https://img-wrapper.vercel.app/image?url=https://placehold.co/100x100/red/white?text=Warning';
+                    e.currentTarget.onerror = null; // Prevent infinite loop
+                  }}
                 />
               </div>
             )}

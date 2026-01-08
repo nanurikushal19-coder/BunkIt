@@ -16,5 +16,15 @@ export interface Lecture {
   startTime: string; // Format "HH:mm"
   endTime: string;   // Format "HH:mm"
   color: string;
-  order?: number; // Added for manual ordering
+  order?: number;
+}
+
+export type ReminderIntensity = 'low' | 'medium' | 'high';
+
+export interface Reminder {
+  id: string;
+  title: string;
+  deadline: string; // ISO Date string
+  intensity: ReminderIntensity;
+  completed: boolean;
 }
