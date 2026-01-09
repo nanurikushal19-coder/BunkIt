@@ -28,3 +28,16 @@ export interface Reminder {
   intensity: ReminderIntensity;
   completed: boolean;
 }
+
+export interface Material {
+  id: string;
+  subjectId: string;
+  title: string;
+  fileName: string;
+  fileType: string;
+  fileData: string; // Base64 string for storage
+  dateAdded: string;
+  size: string;
+}
+
+export type TabType = 'attendance' | 'timetable' | 'notebook' | 'reminder' | 'material';

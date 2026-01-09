@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, HelpCircle, Clock, MoreVertical, ArrowUpDown, ChevronUp, ChevronDown, ListOrdered } from 'lucide-react';
+import { Plus, HelpCircle, Clock, MoreVertical, ArrowUpDown, ChevronUp, ChevronDown, ListOrdered, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Lecture, DayOfWeek, Subject } from '../types';
 import { AddLectureModal } from './AddLectureModal';
 
@@ -67,6 +67,14 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
     return <ListOrdered size={20} />;
   };
 
+  const handlePrevDay = () => {
+    setCurrentDayIndex(prev => (prev === 0 ? 6 : prev - 1));
+  };
+
+  const handleNextDay = () => {
+    setCurrentDayIndex(prev => (prev === 6 ? 0 : prev + 1));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-24">
       <div className="max-w-md mx-auto px-4 pt-8">
@@ -100,11 +108,25 @@ export const TimetableView: React.FC<TimetableViewProps> = ({
           </div>
         </div>
 
-        {/* Day Indicator */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white border border-gray-200 shadow-sm px-6 py-2 rounded-full">
+        {/* Day Indicator with Navigation */}
+        <div className="flex justify-center items-center gap-4 mb-8">
+          <button 
+            onClick={handlePrevDay}
+            className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-zinc-900 transition shadow-sm"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          
+          <div className="bg-white border border-gray-200 shadow-sm px-8 py-2 rounded-full min-w-[140px] text-center">
             <span className="text-zinc-900 font-bold tracking-widest text-sm uppercase">{currentDay}</span>
           </div>
+
+          <button 
+            onClick={handleNextDay}
+            className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-zinc-900 transition shadow-sm"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
 
         {/* Timeline/Schedule */}
