@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Bell, Calendar, Clock, AlertCircle, CheckCircle2, Circle, Trash2, X } from 'lucide-react';
+import { Plus, Bell, Calendar, Clock, CheckCircle2, Circle, Trash2, X } from 'lucide-react';
 import { Reminder, ReminderIntensity } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 

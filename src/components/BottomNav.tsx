@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, CalendarDays, Sparkles, Bell, Library } from 'lucide-react';
+import { GraduationCap, CalendarDays, Bell, Library } from 'lucide-react';
 import { TabType } from '../types';
 
 interface BottomNavProps {
@@ -27,7 +27,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange }) 
       <NavItem tab="attendance" icon={GraduationCap} label="Attendance" />
       <NavItem tab="timetable" icon={CalendarDays} label="Timetable" />
       <NavItem tab="material" icon={Library} label="Material" />
-      <NavItem tab="notebook" icon={Sparkles} label="Notebook" />
       <NavItem tab="reminder" icon={Bell} label="Reminders" />
     </div>
   );

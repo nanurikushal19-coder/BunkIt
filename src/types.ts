@@ -40,4 +40,4 @@ export interface Material {
   size: string;
 }
 
-export type TabType = 'attendance' | 'timetable' | 'notebook' | 'reminder' | 'material';
+export type TabType = 'attendance' | 'timetable' | 'reminder' | 'material';

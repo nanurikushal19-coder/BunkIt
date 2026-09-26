@@ -1,0 +1,10 @@
+{
+ "manifest_version":3,
+ "name":"BunkIt — BNMIT connector",
+ "version":"0.1.0",
+ "description":"Read attendance from your signed-in BNMIT portal for BunkIt. Passwords never leave the portal.",
+ "permissions":["scripting"],
+ "host_permissions":["https://bnmit-students.contineo.in/*"],
+ "background":{"service_worker":"background.js"},
+ "externally_connectable":{"matches":["http://localhost:5173/*","http://127.0.0.1:5173/*"]}
+}
