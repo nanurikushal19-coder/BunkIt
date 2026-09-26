@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from './lib/supabase';
+import { AuthView } from './components/AuthView';
 import { BottomNav } from './components/BottomNav';
 import { Subject, Lecture, Reminder, Material, TabType } from './types';
 import { AttendanceView } from './components/AttendanceView';
@@ -11,6 +14,21 @@ import { MaterialView } from './components/MaterialView';
 const INITIAL_SUBJECTS: Subject[] = [];
 
 function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthReady(true);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
   const [activeTab, setActiveTab] = useState<TabType>('attendance');
   
   // Subjects State with Migration to 85%
@@ -173,6 +191,12 @@ function App() {
   const handleDeleteMaterial = (id: string) => {
     setMaterials(prev => prev.filter(m => m.id !== id));
   };
+
+  if (!authReady) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading BunkIt...</div>;
+  }
+
+  if (!session) return <AuthView />;
 
   return (
     <div className="bg-gray-50 min-h-screen">
