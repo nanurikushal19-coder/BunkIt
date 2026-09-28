@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from './lib/supabase';
+import { AuthView } from './components/AuthView';
 import { BottomNav } from './components/BottomNav';
 import { Subject, Lecture, Reminder, Material, TabType } from './types';
 import { AttendanceView } from './components/AttendanceView';
@@ -11,23 +14,54 @@ import { MaterialView } from './components/MaterialView';
 const INITIAL_SUBJECTS: Subject[] = [];
 
 function App() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthReady(true);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
   const [activeTab, setActiveTab] = useState<TabType>('attendance');
   
-  // Subjects State with Migration to 85%
-  const [subjects, setSubjects] = useState<Subject[]>(() => {
-    const saved = localStorage.getItem('attendance_subjects');
-    let parsed = saved ? JSON.parse(saved) : INITIAL_SUBJECTS;
-    
-    // FORCE UPDATE: Ensure all existing subjects are updated to 85% requirement
-    if (parsed.length > 0) {
-      parsed = parsed.map((s: Subject) => ({
-        ...s,
-        requirement: 0.85
-      }));
+  // Attendance subjects live in Supabase per authenticated user.
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [subjectsReady, setSubjectsReady] = useState(false);
+
+  useEffect(() => {
+    if (!session?.user.id) {
+      setSubjects([]);
+      setSubjectsReady(false);
+      return;
     }
-    
-    return parsed;
-  });
+
+    supabase
+      .from('subjects')
+      .select('id,name,attended,total')
+      .eq('user_id', session.user.id)
+      .order('id')
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load subjects', error);
+        } else {
+          setSubjects((data ?? []).map(row => ({
+            id: String(row.id),
+            name: row.name,
+            attended: row.attended ?? 0,
+            missed: Math.max(0, (row.total ?? 0) - (row.attended ?? 0)),
+            requirement: 0.85
+          })));
+        }
+        setSubjectsReady(true);
+      });
+  }, [session?.user.id]);
 
   // Lectures State
   const [lectures, setLectures] = useState<Lecture[]>(() => {
@@ -53,10 +87,6 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('attendance_subjects', JSON.stringify(subjects));
-  }, [subjects]);
-
-  useEffect(() => {
     localStorage.setItem('timetable_lectures', JSON.stringify(lectures));
   }, [lectures]);
 
@@ -73,38 +103,52 @@ function App() {
   }, [materials]);
 
   // Attendance Handlers
-  const handleUpdate = (id: string, field: 'attended' | 'missed', change: number) => {
-    setSubjects(prev => prev.map(sub => {
-      if (sub.id === id) {
-        const newValue = Math.max(0, sub[field] + change);
-        return { ...sub, [field]: newValue };
-      }
-      return sub;
-    }));
+  const handleUpdate = async (id: string, field: 'attended' | 'missed', change: number) => {
+    const current = subjects.find(sub => sub.id === id);
+    if (!current || !session) return;
+
+    const next = {
+      ...current,
+      [field]: Math.max(0, current[field] + change)
+    };
+    setSubjects(prev => prev.map(sub => sub.id === id ? next : sub));
+
+    const { error } = await supabase
+      .from('subjects')
+      .update({ attended: next.attended, total: next.attended + next.missed, updated_at: new Date().toISOString() })
+      .eq('id', Number(id))
+      .eq('user_id', session.user.id);
+
+    if (error) console.error('Failed to update attendance', error);
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this subject?')) {
+  const handleDelete = async (id: string) => {
+    if (!session || !window.confirm('Are you sure you want to delete this subject?')) return;
+    const { error } = await supabase.from('subjects').delete().eq('id', Number(id)).eq('user_id', session.user.id);
+    if (!error) {
       setSubjects(prev => prev.filter(sub => sub.id !== id));
       setLectures(prev => prev.filter(l => l.subjectId !== id));
-      // Also delete associated materials? Optional, but cleaner.
-      // setMaterials(prev => prev.filter(m => m.subjectId !== id));
     }
   };
 
-  const handleAddSubject = () => {
-    const name = prompt('Enter subject name:');
-    if (name) {
-      const newSubject: Subject = {
-        id: Date.now().toString(),
-        name,
-        attended: 0,
-        missed: 0,
-        // Enforce 85% requirement for new subjects
-        requirement: 0.85
-      };
-      setSubjects(prev => [...prev, newSubject]);
-    }
+  const handleAddSubject = async () => {
+    const name = prompt('Enter subject name:')?.trim();
+    if (!name || !session) return;
+
+    const { data, error } = await supabase
+      .from('subjects')
+      .insert({ user_id: session.user.id, name, attended: 0, total: 0 })
+      .select('id,name,attended,total')
+      .single();
+
+    if (error) return console.error('Failed to add subject', error);
+    setSubjects(prev => [...prev, {
+      id: String(data.id),
+      name: data.name,
+      attended: data.attended ?? 0,
+      missed: Math.max(0, (data.total ?? 0) - (data.attended ?? 0)),
+      requirement: 0.85
+    }]);
   };
 
   // Timetable Handlers
@@ -173,6 +217,12 @@ function App() {
   const handleDeleteMaterial = (id: string) => {
     setMaterials(prev => prev.filter(m => m.id !== id));
   };
+
+  if (!authReady || (session && !subjectsReady)) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading BunkIt...</div>;
+  }
+
+  if (!session) return <AuthView />;
 
   return (
     <div className="bg-gray-50 min-h-screen">
